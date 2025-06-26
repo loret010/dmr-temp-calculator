@@ -36,6 +36,11 @@
       font-size: 18px;
       color: #111;
     }
+    #warning {
+      font-size: 14px;
+      color: #c00;
+      margin-top: 15px;
+    }
     footer {
       margin-top: 40px;
       font-size: 14px;
@@ -58,65 +63,69 @@
 
   <div id="result"></div>
 
+  <p id="warning">
+    ⚠️ <strong>Note:</strong> At valve settings above <strong>75%</strong>, turbines may enter overpressure.
+    This can cause sudden output spikes (e.g. jumping from ~180 GWh to your target),
+    and real behavior may not follow the model accurately.
+  </p>
+
   <footer>
     Created by <strong>loret010</strong> — Licensed under CC BY-NC-ND 4.0
   </footer>
 
   <script>
-  const a = -0.0000622;
-  const b = 0.3258;
-  const c = -72.05;
+    const a = -0.0000622;
+    const b = 0.3258;
+    const c = -72.05;
+    const maxGWhAt60 = -0.0000622 * Math.pow(2618.8, 2) + 0.3258 * 2618.8 - 72.05; // ~390.5
 
-  const maxGWhAt60 = -0.0000622 * Math.pow(2618.8, 2) + 0.3258 * 2618.8 - 72.05; // ≈ 390.5
+    function calculate() {
+      const valve = parseFloat(document.getElementById('valve').value);
+      const gwh = parseFloat(document.getElementById('gwh').value);
+      const result = document.getElementById('result');
 
-  function calculate() {
-    const valve = parseFloat(document.getElementById('valve').value);
-    const gwh = parseFloat(document.getElementById('gwh').value);
-    const result = document.getElementById('result');
+      if (isNaN(valve) || isNaN(gwh) || valve <= 0 || valve > 100) {
+        result.innerHTML = "⚠️ Please enter valid numbers (valve: 1–100, GWh > 0).";
+        return;
+      }
 
-    if (isNaN(valve) || isNaN(gwh) || valve <= 0 || valve > 100) {
-      result.innerHTML = "⚠️ Please enter valid numbers (valve: 1–100, GWh > 0).";
-      return;
+      const scale = valve / 60;
+      const scaledTarget = gwh / scale;
+
+      // Suggest minimum valve if needed
+      if (scaledTarget > maxGWhAt60) {
+        const suggestedValve = (60 * gwh / maxGWhAt60);
+        const rounded = Math.ceil(suggestedValve * 2) / 2; // round to 0.5
+        result.innerHTML = `
+          ❌ Cannot reach ${gwh} GWh at ${valve}% valve.<br>
+          🔁 Try increasing valve to at least <b>${rounded}%</b>.
+        `;
+        return;
+      }
+
+      const A = a;
+      const B = b;
+      const C = c - scaledTarget;
+      const discriminant = B * B - 4 * A * C;
+
+      if (discriminant < 0) {
+        result.innerHTML = "❌ No valid temperature found.";
+        return;
+      }
+
+      const sqrtDisc = Math.sqrt(discriminant);
+      const root1 = (-B + sqrtDisc) / (2 * A);
+      const root2 = (-B - sqrtDisc) / (2 * A);
+      const validTemps = [root1, root2].filter(t => t > 0);
+
+      if (validTemps.length === 0) {
+        result.innerHTML = "❌ No positive temperature found.";
+      } else {
+        const temp = validTemps[0];
+        result.innerHTML = `✅ Required DMR Temperature: <b>${temp.toFixed(2)} K</b>`;
+      }
     }
-
-    const scale = valve / 60;
-    const scaledTarget = gwh / scale;
-
-    // Check if the GWh is physically possible at this valve %
-    if (scaledTarget > maxGWhAt60) {
-      const suggestedValve = (60 * gwh / maxGWhAt60);
-      const rounded = Math.ceil(suggestedValve * 2) / 2; // round to nearest 0.5
-
-      result.innerHTML = `
-        ❌ Cannot reach ${gwh} GWh at ${valve}% valve.<br>
-        🔁 Try increasing valve to at least <b>${rounded}%</b>.
-      `;
-      return;
-    }
-
-    const A = a;
-    const B = b;
-    const C = c - scaledTarget;
-    const discriminant = B * B - 4 * A * C;
-
-    if (discriminant < 0) {
-      result.innerHTML = "❌ No valid temperature found.";
-      return;
-    }
-
-    const sqrtDisc = Math.sqrt(discriminant);
-    const root1 = (-B + sqrtDisc) / (2 * A);
-    const root2 = (-B - sqrtDisc) / (2 * A);
-    const validTemps = [root1, root2].filter(t => t > 0);
-
-    if (validTemps.length === 0) {
-      result.innerHTML = "❌ No positive temperature found.";
-    } else {
-      const temp = validTemps[0];
-      result.innerHTML = `✅ Required DMR Temperature: <b>${temp.toFixed(2)} K</b>`;
-    }
-  }
-</script>
+  </script>
 
 </body>
 </html>
