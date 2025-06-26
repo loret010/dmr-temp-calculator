@@ -17,4 +17,4 @@ A simple web-based tool to estimate the required DMR temperature to reach a targ
 ## 🌐 Live Version
 
 Access the calculator here:  
-🔗 **[GitHub Pages: DMR Temperature Calculator](https://loret010.github.io/dmr-temp-calculator/)
+🔗 **[GitHub Pages: DMR Temperature Calculator]**(https://loret010.github.io/dmr-temp-calculator/)
