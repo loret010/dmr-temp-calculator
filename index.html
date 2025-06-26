@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DMR Temperature Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      max-width: 600px;
+      margin: auto;
+      padding: 30px;
+    }
+    h2 {
+      color: #0077cc;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 8px;
+      margin-bottom: 16px;
+    }
+    button {
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    #result {
+      font-size: 18px;
+      color: #111;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 14px;
+      text-align: center;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🔬 DMR Required Temperature Calculator</h2>
+
+  <label for="valve">Steam Valve (%)</label>
+  <input type="number" id="valve" placeholder="e.g. 60">
+
+  <label for="gwh">Target GWh</label>
+  <input type="number" id="gwh" placeholder="e.g. 275">
+
+  <button onclick="calculate()">Calculate Temperature</button>
+
+  <div id="result"></div>
+
+  <footer>
+    Created by <strong>loret010</strong> — Licensed under CC BY-NC-ND 4.0
+  </footer>
+
+  <script>
+    const a = -0.0000622;
+    const b = 0.3258;
+    const c = -72.05;
+
+    function calculate() {
+      const valve = parseFloat(document.getElementById('valve').value);
+      const gwh = parseFloat(document.getElementById('gwh').value);
+      const result = document.getElementById('result');
+
+      if (isNaN(valve) || isNaN(gwh) || valve <= 0 || valve > 100) {
+        result.innerHTML = "⚠️ Please enter valid numbers (valve: 1–100, GWh > 0).";
+        return;
+      }
+
+      const scale = valve / 60;
+      const scaledTarget = gwh / scale;
+
+      const A = a;
+      const B = b;
+      const C = c - scaledTarget;
+      const discriminant = B * B - 4 * A * C;
+
+      if (discriminant < 0) {
+        result.innerHTML = "❌ No valid temperature found.";
+        return;
+      }
+
+      const sqrtDisc = Math.sqrt(discriminant);
+      const root1 = (-B + sqrtDisc) / (2 * A);
+      const root2 = (-B - sqrtDisc) / (2 * A);
+      const validTemps = [root1, root2].filter(t => t > 0);
+
+      if (validTemps.length === 0) {
+        result.innerHTML = "❌ No positive temperature found.";
+      } else {
+        const temp = validTemps[0];
+        result.innerHTML = `✅ Required DMR Temperature: <b>${temp.toFixed(2)} K</b>`;
+      }
+    }
+  </script>
+
+</body>
+</html>
