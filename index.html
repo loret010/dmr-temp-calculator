@@ -123,7 +123,6 @@
       const scale = valve / 60;
       const scaledTarget = gwh / scale;
 
-      // Suggest minimum valve if needed
       if (scaledTarget > maxGWhAt60) {
         const suggestedValve = (60 * gwh / maxGWhAt60);
         const rounded = Math.ceil(suggestedValve * 2) / 2; // round to 0.5
